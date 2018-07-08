@@ -1,0 +1,34 @@
+The following options are available for the sacd_extract commandline tool:
+
+Usage: sacd_extract [options] [outfile]
+  -2, --2ch-tracks                : Export two channel tracks (default)
+  -m, --mch-tracks                : Export multi-channel tracks
+  -e, --output-dsdiff-em          : output as Philips DSDIFF (Edit Master) file
+  -p, --output-dsdiff             : output as Philips DSDIFF file
+  -s, --output-dsf                : output as Sony DSF file
+  -I, --output-iso                : output as RAW ISO
+  -c, --convert-dst               : convert DST to DSD
+  -C, --export-cue                : Export a CUE Sheet
+  -i, --input[=FILE]              : set source and determine if "iso" image,
+                                    device or server (ex. -i192.168.1.10:2002)
+  -P, --print                     : display disc and track information
+
+Help options:
+  -?, --help                      : Show this help message
+  --usage                         : Display brief usage message
+ 
+Usage examples:
+
+Extract all stereo tracks to multiple DSDIFF files and convert all DST to DSD:
+
+$ sacd_extract -2 -p -c -i"Foo_Bar_RIP.ISO"
+
+Extract all multi channel tracks from the given ISO to multiple DSF files and 
+convert all DST to DSD:
+
+$ sacd_extract -2 -s -i"Foo_Bar_RIP.ISO"
+
+Extract a single DSDIFF/DSD Multi-Channel Edit Master track from the given ISO
+and convert all DST to DSD:
+
+$ sacd_extract -m -e -c -i"Foo_Bar_RIP.ISO"
