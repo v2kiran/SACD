@@ -1,5 +1,6 @@
+using namespace  system.collections
 
-$SACD = Join-Path -Path $PSScriptRoot -ChildPath Apps\sacd_extract.exe
+$Script:SACD = Join-Path -Path $PSScriptRoot -ChildPath Apps\sacd_extract.exe
 
 function List-SACDTrack
 {
@@ -29,7 +30,7 @@ function List-SACDTrack
     
         $sacd_Info = Split-Path -Path $Path -Parent | Join-Path -ChildPath 'SACD_Info.txt'
         Write-Verbose "Writing SACD Info to:`t [$sacd_info]"
-        $iso_output | Out-File -LiteralPath $sacd_Info -Force
+        $iso_output | Out-File -LiteralPath $sacd_Info -Force -ErrorAction Stop
 
         #Parse the raw output from sacd_extract.exe
         $Album = ($iso_output | Select-String  -Pattern "Title:\s+" | select -ExpandProperty Line -First 1).split(":")[1].trim()
@@ -39,7 +40,7 @@ function List-SACDTrack
         $TrackList = ($iso_output | Select-String  -Pattern "(?<=Title\[\d\]:\s).*" | select -ExpandProperty Matches | select -ExpandProperty value -Unique)
 
         #Create custom objects for each track
-        $TrackList | % -Begin {$i = 1} -process {
+        $TrackList | ForEach-Object -Begin {$i = 1} -process {
   
             [Pscustomobject]@{
                 Count    = $i
@@ -83,7 +84,7 @@ function Extract-SACDTrack
         
         [ValidateSet('PhilipsDSDIFF', 'PhilipsDSDIFF_EditMaster', 'SonyDSF', 'RAWISO')]
         [String]
-        $OutputFormat = 'Philips DSDIFF',
+        $OutputFormat = 'PhilipsDSDIFF',
                
         [Switch]
         $ConvertDSTtoDSD,     
@@ -122,7 +123,7 @@ function Extract-SACDTrack
         
         }
       
-        Copy-Item -Path $SACD -Destination $SACD_New -Force 
+        Copy-Item -Path $SACD -Destination $SACD_New -Force -ErrorAction Stop
       
       
       
@@ -145,7 +146,7 @@ function Extract-SACDTrack
         }
       
           
-        $SACD_Args = [collections.arraylist]::new()
+        $SACD_Args = [arraylist]::new()
         $null = $SACD_Args.Add($ch)
         $null = $SACD_Args.Add($of)
 
