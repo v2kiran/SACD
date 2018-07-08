@@ -1,27 +1,26 @@
-# PSLiteDB
+# SACD
 
 ## OverView
-[LiteDB](http://www.litedb.org/) is a noSQL singlefile datastore just like SQLite.
-PSLiteDB is a PowerShell wrapper for LiteDB
-PSLiteDB has been compiled against the .NET Standard 2 which means you can use this module with both Windows PowerShell and [PowerShell Core](https://blogs.msdn.microsoft.com/powershell/2018/01/10/powershell-core-6-0-generally-available-ga-and-supported/).
+This module allows you to read an SACD ISO Audio file, list the track\Album and artist information. It can also help you to extract individual audio tracks in dsd format.
+Based on the number of Audio channels recorded in the ISO file you can extract the Audio tracks in 2-channel or multi channel configuration.
+The output directory can be the same as the ISO file or a custom user specified directory.
 
-Note: In LiteDB
-- CollectionNames are case-insensitive
-- FieldNames or property Names are case-sensitive
-- FieldValues or PropertyValues are case-sensitive unless queried with an Index that has been explicity created with lowercase values.
+## What is an SACD
+SACD was Sony and Philips's unsuccessful foray into the world of high-resolution audio. SACD uses a one-bit, high-resolution DSD system that, when used throughout the entire recording process, can produce a stunning audio sound with many times more resolution and much more realistic sound than a compact disc. Also, most SACDs were recorded in stereo rather than in 5.1 surround. [More Details Here](https://hometheaterreview.com/super-audio-compact-disc-sacd/).
+
 
 ## Clone Module
 
 ```powershell
 #Clone the repo in c:\temp
 cd c:\temp
-git clone https://github.com/v2kiran/PSLiteDB.git
+git clone https://github.com/v2kiran/SACD.git
 ```
 OR
 
 If you have powershell 5.1 you can install PSLiteDB from the [PowerShell Gallery](https://www.powershellgallery.com/)
 ```powershell
-Install-Module -Name PSLiteDB -Scope CurrentUser
+Install-Module -Name SACD -Scope CurrentUser
 ```
 
 ***
@@ -39,169 +38,128 @@ Other Resources:
 
 ## Import Module
 ```powershell
-Import-Module c:\temp\PSLiteDB -verbose
+Import-Module c:\temp\SACD -verbose
 ```
 
 ***
 
-## Create Database
+## List Audio Tracks
 ```powershell
-$dbPath = "C:\temp\LiteDB\Service.db"
-New-LiteDBDatabase -Path $dbPath -Verbose
+List-SACDTrack -Path "C:\Audio\Police.iso" | Format-Table -Autosize
+
+Count Track                                Artist     Album                                Channels
+----- -----                                ------     -----                                --------
+    1 Roxanne                              The Police Every Breath You Take - The Classics 2,6
+    2 Can't Stand Losing You               The Police Every Breath You Take - The Classics 2,6
+    3 Message In A Bottle                  The Police Every Breath You Take - The Classics 2,6
+    4 Walking On The Moon                  The Police Every Breath You Take - The Classics 2,6
+    5 Don't Stand So Close To Me           The Police Every Breath You Take - The Classics 2,6
+    6 De Do Do Do, De Da Da Da             The Police Every Breath You Take - The Classics 2,6
+    7 Every Little Thing She Does Is Magic The Police Every Breath You Take - The Classics 2,6
+    8 Invisible Sun                        The Police Every Breath You Take - The Classics 2,6
+    9 Spirits In The Material World        The Police Every Breath You Take - The Classics 2,6
+   10 Every Breath You Take                The Police Every Breath You Take - The Classics 2,6
+```
+
+The SACD "Police.iso" contains 10 tracks which have been recorded in 2 different speaker configurations:
+- 2-channel
+- 6-channel
+
+During extraction you can choose which configuration you want the tracks to be in.
+***
+
+## Extract 2-channel Audio Tracks
+Extract tracks in 2-channel speaker configuration along with a cuesheet. COnvert any DST to DSD format.
+The output directory is the same as the ISO file.
+
+
+```powershell
+$ISOFile = "C:\Audio\Police.iso"
+Extract-SACDTrack -Path $ISOFile -Channels Two -OutputFormat PhilipsDSDIFF -ConvertDSTtoDSD -ExportCueSheet -Verbose
+
+# The above command can also be written as :
+Extract-SACDTrack -Path $ISOFile -ConvertDSTtoDSD -ExportCueSheet -Verbose
+```
+This works because the default values for the "Channels" parameter is "2-channel" and that for the "Outputformat" is "PhilipsDSDIFF"
+***
+
+## Extract multi-channel Audio Tracks
+Extract tracks in 6-channel speaker configuration along with a cuesheet. Convert any DST to DSD format.
+
+
+```powershell
+$ISOFile = "C:\Audio\Police.iso"
+Extract-SACDTrack $ISOFile -Channels multi -ConvertDSTtoDSD -Verbose
+```
+multi-channel can mean any of the following speaker configurations 5 6 or 7 channels. The actual number of audio channels of the tracks depends upon the SACD ISO file
+***
+
+## Output to a custom directory.
+```powershell
+$ISOFile = "C:\Audio\Police.iso"
+Extract-SACDTrack -Path $ISOFile -Destination "C:\AudioOutput\Police" -ConvertDSTtoDSD -Verbose
+```
+Destination directory will be automatically created if it dosent already exist.
+
+***
+
+## Various Output formats
+Philips DSDIFF is the default output format but you may specify any of the following formats during extraction.
+
+```powershell
+$ISOFile = "C:\Audio\Police.iso"
+
+# Output as Sony DSF
+Extract-SACDTrack $ISOFile -OutputFormat SonyDSF -ConvertDSTtoDSD -Verbose
+
+# Output as Raw ISO
+Extract-SACDTrack $ISOFile -OutputFormat RAWISO -ConvertDSTtoDSD -Verbose
 ```
 
 ***
 
-## Connect Database
-The connection to the first db is stored in a session variable called `$LiteDBPSConnection`.
-This connection variable is re-used in various cmdlets from this module making it efficient by having to type less.
-if you want to work with multiple databases then you will need to store each connection from `Open-LiteDBConnection` in a different variable and pass
-that to each cmdlet's `Connection` parameter.
-Check the [Wiki](https://github.com/v2kiran/PSLiteDB/wiki/Working-with-Multiple-Databases) for an example on how to work with multiple databases simultaneously.
+## Batch Processing
+ you can use the pipeline to process multiple SACD ISO files in different sub directories
+
 ```powershell
-Open-LiteDBConnection -Database $dbPath
+# List track information
+Get-ChildItem -Path 'M:\Music' -Filter *.iso -Recurse |
+    List-SACDTrack | 
+      Format-Table Count,Track,Channels,Album -GroupBy Artist
+
+  Artist: Steely Dan
+
+Count Track              Channels Album
+----- -----              -------- -----
+    1 Babylon Sisters    2        Gaucho
+    2 Hey Nineteen       2        Gaucho
+    3 Glamour Profession 2        Gaucho
+    4 Gaucho             2        Gaucho
+    5 Time Out Of Mind   2        Gaucho
+    6 My Rival           2        Gaucho
+    7 Third World Man    2        Gaucho
+
+
+   Artist: The Police
+
+Count Track                                Channels Album
+----- -----                                -------- -----
+    1 Roxanne                              2,6      Every Breath You Take - The Classics
+    2 Can't Stand Losing You               2,6      Every Breath You Take - The Classics
+    3 Message In A Bottle                  2,6      Every Breath You Take - The Classics
+    4 Walking On The Moon                  2,6      Every Breath You Take - The Classics
+    5 Don't Stand So Close To Me           2,6      Every Breath You Take - The Classics
+    6 De Do Do Do, De Da Da Da             2,6      Every Breath You Take - The Classics
+    7 Every Little Thing She Does Is Magic 2,6      Every Breath You Take - The Classics
+    8 Invisible Sun                        2,6      Every Breath You Take - The Classics
+    9 Spirits In The Material World        2,6      Every Breath You Take - The Classics
+   10 Every Breath You Take                2,6      Every Breath You Take - The Classics
+
+
+# Extract Tracks
+Get-ChildItem -Path 'M:\Music' -Filter *.iso -Recurse |
+    Extract-SACDTrack -ConvertDSTtoDSD -Verbose
 ```
+This works because the path parameter of the List\ExtractSACD cmdlet is automatically bound to output from the "Get-ChildItem" cmdlet.
 
 ***
-
-## Create a Collection.
-```powershell
-New-LiteDBCollection -Collection SvcCollection
-
-# verify that the collection was created
-Get-LiteDBCollectionName
-```
-
-***
-
-## Create an Index.
-```powershell
-# Creates an index in the collection `SvcCollection` with all `DisplayName` property values in `lowercase`
-New-LiteDBIndex -Collection SvcCollection -Field DisplayName -Expression "LOWER($.DisplayName)"
-
-# verify that the index was created
-Get-LiteDBIndex -Collection SvcCollection
-```
-
-***
-
-## Insert Records
-Get all the services whose name starts with bfollowed by any sequence of characters.
-Force the `Name` property to become the `_id` property in the LiteDB collection
-Serialize the selected records and finally insert them into the `SvcCollection`
-```powershell
-Get-Service b* | 
-  select @{Name="_id";E={$_.Name}},DisplayName,Status,StartType | 
-      ConvertTo-LiteDbBSON | 
-         Add-LiteDBDocument -Collection SvcCollection
-```
-
-***
-
-## Find Records
-Because we used the `Name` property of the `servicecontroller` object as our `_id` in the LiteDb collection, we can search for records using the `ServiceName`
-```powershell
-#Note that the value of parameter ID: 'BITS' is case-sensitive
-Find-LiteDBDocument -Collection SvcCollection -ID BITS
-
-Output:
-
-Collection  : SvcCollection
-_id         : "BITS"
-DisplayName : "Background Intelligent Transfer Service"
-Status      : 4
-StartType   : 2
-
-# just to illustrate that lowercase bits wont show up in the results
-Find-LiteDBDocument -Collection P6 -ID bits
-WARNING: Document with ID ['"bits"'] does not exist in the collection ['SvcCollection']
-
-<#
-List all documents in a collection, limiting the total docs displayed to 5 and skipping the first 2. 
-'Limit' and 'skip' are optional parameters
-By default if you omit the limit parameter only the first 1000 docs are displayed
-#>
-Find-LiteDBDocument -Collection SvcCollection -Limit 5 -Skip 2
-```
-
-***
-
-## Update records
-lets stop the BITS service and then update the collection with the new `status`
-```powershell
-Get-Service BITS | 
-  Select @{Name="_id";E={$_.Name}},DisplayName,Status,StartType | 
-     ConvertTo-LiteDbBSON | 
-        Update-LiteDBDocument -Collection SvcCollection
-
-# retrieve the bits service record in the litedb collection to see the updated status
-Find-LiteDBDocument -Collection SvcCollection -ID BITS
-
-Output:
-
-Collection  : SvcCollection
-_id         : "BITS"
-DisplayName : "Background Intelligent Transfer Service"
-Status      : 1
-StartType   : 2
-```
-
-***
-
-## Delete Records
-```powershell
-# Delete record by ID
-Remove-LiteDBDocument -Collection SvcCollection -ID BITS
-
-# If we now try to retrieve the `BITS` record we should see a warning
-Find-LiteDBDocument -Collection SvcCollection -ID BITS
-WARNING: Document with ID ['"BITS"'] does not exist in the collection ['SvcCollection']
-```
-
-***
-
-## Upsert Records
-Upsert stands for - Add if not record exists or update if it does exist.
-```powershell
-Get-Service b* | 
-  select @{Name="_id";E={$_.Name}},DisplayName,Status,StartType | 
-      ConvertTo-LiteDbBSON | 
-         Upsertldb -Collection SvcCollection
-```
-
-***
-
-## Custom Queries
-By default the parameter values are case-sensitive 
-```powershell
-# Find all documents that contain the word 'Bluetooth' in the `SvcCollection` property `DisplayName`
-New-LiteDBQuery -Field DisplayName -Value 'Bluetooth' -Operator Contains | Find-LiteDBDocument -Collection SvcCollection
-
-# Find all records whose `Status` property greaterthan 3 meaning `started`
-New-LiteDBQuery -Field Status -Value 3 -Operator GT | Find-LiteDBDocument -Collection SvcCollection
-
-# Find all records whose `Status` property lessthan 3 meaning `stopped`
-New-LiteDBQuery -Field Status -Value 3 -Operator LT | Find-LiteDBDocument -Collection SvcCollection
-
-# Combining queries with AND ($QueryLDB is an alias for the litedb query class)
-$And_Query = $QueryLDB::And($QueryLDB::StartsWith("DisplayName","Blue"),$QueryLDB::GT("Status",3))
-Find-LiteDBDocument -Collection SvcCollection -Query $And_Query
-
-# Combining queries with OR
-$OR_Query = $QueryLDB::Or($QueryLDB::StartsWith("DisplayName","Blue"),$QueryLDB::Contains("DisplayName","Encryption"))
-Find-LiteDBDocument -Collection SvcCollection -Query $OR_Query
-```
-
-***
-
-## Close LiteDB Connection
-```powershell
-Close-LiteDBConnection
-```
-
-## WIKI
-- [Create A LiteDB database that is passwordprotected](https://github.com/v2kiran/PSLiteDB/wiki/Database-with-Password)
-- [LiteDB Connection Options](https://github.com/v2kiran/PSLiteDB/wiki/Open-LiteDBConnection)
-- [Demo: PersonCollection](https://github.com/v2kiran/PSLiteDB/wiki/PersonCollection:-Demo-1)
-- [Speed-Test](https://github.com/v2kiran/PSLiteDB/wiki/Speed-test)
-- [Work on Multiple Databases in parallel](https://github.com/v2kiran/PSLiteDB/wiki/Working-with-Multiple-Databases)
