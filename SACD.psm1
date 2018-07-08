@@ -122,7 +122,8 @@ function Extract-SACDTrack
             $SACD_New = Join-Path -Path $Destination -ChildPath 'sacd_extract.exe'
         
         }
-      
+        
+        # COpy sacd_extract.exe to the output directory.
         Copy-Item -Path $SACD -Destination $SACD_New -Force -ErrorAction Stop
       
       
@@ -167,12 +168,16 @@ function Extract-SACDTrack
       
         $null = $SACD_Args.Add("-i`"$path`"")   
       
+        
+        Write-Verbose ("Source File:`t[{0}]" -f $Path )
+        Write-Verbose ("Output Directory:`t[{0}]" -f $dest )
         Write-Verbose ("Commandline:`t[{0}]" -f ($SACD_Args -join ','))
-        Write-Verbose ("OutputDirectory:`t[{0}]" -f $dest )
-
+        
+        
+        # Run the extraction
         &$SACD_New $SACD_Args
       
-      
+        # Clean-up. Remove the sacd_extract.exe binary from the output Directory
         Remove-Item -LiteralPath $SACD_New -Force
       
         Pop-Location

@@ -2,8 +2,14 @@
 
 ## OverView
 This module allows you to read an SACD ISO Audio file, list the track\Album and artist information. It can also help you to extract individual audio tracks in dsd format.
+
 Based on the number of Audio channels recorded in the ISO file you can extract the Audio tracks in 2-channel or multi channel configuration.
+
 The output directory can be the same as the ISO file or a custom user specified directory.
+
+By default the extracted files are always output to the same directory as the sacd_extract.exe binary. During extraction the sacd_extract.exe is copied to the Destination or output directory and is cleaned-up post extraction.
+
+A text file containing the ISO disk,Album& Artist information is also created in the output directory.
 
 ## What is an SACD
 SACD was Sony and Philips's unsuccessful foray into the world of high-resolution audio. SACD uses a one-bit, high-resolution DSD system that, when used throughout the entire recording process, can produce a stunning audio sound with many times more resolution and much more realistic sound than a compact disc. Also, most SACDs were recorded in stereo rather than in 5.1 surround. [More Details Here](https://hometheaterreview.com/super-audio-compact-disc-sacd/).
